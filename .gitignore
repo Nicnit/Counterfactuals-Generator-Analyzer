@@ -1,0 +1,134 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+myvenv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Testing and Developer Files
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+tests/
+test_*.py
+*_test.py
+tests/output/
+tests/*.csv
+tests/*.json
+tests/*.log
+*.log
+test_output.log
+test_*.csv
+test_*.json
+*_test_output.csv
+*_test_output.json
+*_test_results.*
+TEST_*.md
+*TEST*.md
+
+# Data files
+*.csv
+src/Data/*.csv
+src/Output/*.csv
+cached_road_coordinates.json
+
+# Output files (generated results)
+examples/Output/*.csv
+examples/Output/*.json
+tests/output/*.csv
+tests/output/*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+cached_road_coordinates.json
+*.pyc
+*.pyo
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Documentation directory (for AI assistance, not for end users)
+docs/
+
+# Developer documentation and internal notes
+src/Notes/
+src/GENERALIZABLE_USAGE.md
+*_IMPROVEMENTS.md
+*_SUMMARY.md
+PRODUCTION_CHECKLIST.md
+
+# Cloud deployment
+.azure/
+.aws/
+.gcp/
+*.pem
+*.key
+
+# Package files
+*.whl
+*.tar.gz

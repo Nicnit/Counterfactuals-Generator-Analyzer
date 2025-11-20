@@ -1,0 +1,7 @@
+# Core data science packages
+pandas>=2.0.0
+numpy>=1.24.0
+
+# HTTP requests for API calls
+requests>=2.31.0
+
