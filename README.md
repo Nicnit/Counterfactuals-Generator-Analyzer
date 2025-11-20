@@ -33,6 +33,13 @@ python3 src/generate_counterfactuals.py \
   --events events.json
 ```
 
+Example output:
+Summary
+Input rows: 36144
+Output rows: 4732
+Events processed: 1
+Entities processed: 28
+
 ### Compare Actual vs Counterfactual
 
 ```bash
@@ -40,6 +47,14 @@ python3 src/compare_counterfactuals.py \
   --actual your_data.csv \
   --counterfactual your_data_counterfactuals.csv
 ```
+
+Example output:
+  Mean difference: 2.90
+  Median difference: -4.05
+  Std difference: 72.81
+  Min difference: -125.87
+  Max difference: 263.08
+  Data points: 56
 
 Generates comparison statistics showing differences between actual and counterfactual values.
 
@@ -78,23 +93,19 @@ Combines AR model predictions with cyclical adjustments. Adds controlled noise b
 
 ### Setup
 
-```bash
-pip install -r requirements.txt
-```
+install requirements.txt ^
 
-Or use the setup script:
+A bash setup available
 ```bash
 ./setup.sh
 ```
 
-## Using Your Own Data
-
 ### Data Requirements
 
 CSV file needs:
-1. A datetime column (any name: `timestamp`, `date`, `time`, etc.)
-2. A numeric value column (any name: `sales`, `traffic`, `temperature`, etc.)
-3. Optional: entity column
+A datetime column (any name: `timestamp`, `date`, `time`, etc.)
+A numeric value column (any name: `sales`, `traffic`, `temperature`, etc.)
+can have an entity column
 
 Example data structure:
 ```csv
@@ -105,13 +116,13 @@ Timestamp,Sales,Store
 ...
 ```
 
-### Prepare Your Data
+### Prepare Data
 
-Data should:
-- Have a datetime column
-- Have a numeric value column
-- Be sorted by time
-- Have sufficient pre-event data
+Data needs to
+- have a datetime column
+- have a numeric value column
+- be sorted by time
+- have enough pre event data
 
 ### Define Events
 
@@ -162,7 +173,7 @@ Generates:
 
 ## Example Commands
 
-### Basic Usage
+### Examples
 
 ```bash
 python3 src/generate_counterfactuals.py \
@@ -223,33 +234,31 @@ events = [
 result = generator.generate_multiple(df_clean, events)
 ```
 
-## Auto-Detection
+## Auto Detection
 
 The library detects:
 
-1. Time column: looks for datetime columns (`timestamp`, `date`, `time`, `datetime`, etc.)
-2. Target column: identifies first numeric column (excludes `id`, `name`, `latitude`, `longitude`)
-3. Entity column: detects if multiple entities exist
-4. Frequency: infers from time differences
-5. Cycle period: determines appropriate cycle based on frequency:
-   - Sub-daily data -> `hour`
-   - Daily data -> `day`
-   - Weekly data -> `week`
-   - Monthly data -> `month`
+Time column looks for datetime columns (`timestamp`, `date`, `time`, `datetime`, etc.)
+Target column identifies first numeric column (excludes `id`, `name`, `latitude`, `longitude`)
+Entity column detects if multiple entities exist
+Frequency infers from time differences
+Cycle period determines appropriate cycle based on frequency:
+- Sub-daily data -> `hour`
+- Daily data -> `day`
+- Weekly data -> `week`
+- Monthly data -> `month`
 
 All parameters can be manually overridden. Auto-detection is a convenience, not a requirement.
 
-## Configuration Options
-
-### CLI Arguments
+### CLI Args
 
 ```bash
 --input, -i              Input CSV file (required)
 --events, -e             Events JSON file or inline string (required)
 --output, -o             Output CSV file (default: <input>_counterfactuals.csv)
---time-col               Time column name (auto-detected if not provided)
---target-col             Target column name (auto-detected if not provided)
---entity-col             Entity column name (auto-detected if not provided)
+--time-col               Time column name (auto-detected if none)
+--target-col             Target column name (auto-detected if none)
+--entity-col             Entity column name (auto-detected if none)
 --ar-order               AR model order (default: 1)
 --cycle-period           Cycle period: hour/day/week/month (auto-detected if not provided)
 --forecast-days          Days to forecast after event (default: 5)
@@ -303,10 +312,6 @@ Need at least 2-3x the event duration in pre-event data.
 ### Multiple Entities
 
 With multiple entities, the script processes each entity separately, generates counterfactuals for each, and combines results in the output file.
-
-## Testing
-
-The project includes comprehensive tests. See test files for examples of usage.
 
 ## License
 

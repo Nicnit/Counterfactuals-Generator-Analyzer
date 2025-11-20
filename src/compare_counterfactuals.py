@@ -274,8 +274,11 @@ def main():
         print(f"     Data points: {len(actual_event)} actual, {len(counterfactual_event)} counterfactual")
         
         cf_comparison = counterfactual_event[[cf_time_col, cf_col]].copy()
-        if entity_col and entity_col in counterfactual_event.columns:
-            cf_comparison[entity_col] = counterfactual_event[entity_col]
+        if entity_col:
+            if entity_col in counterfactual_event.columns:
+                cf_comparison[entity_col] = counterfactual_event[entity_col]
+            elif 'entity' in counterfactual_event.columns:
+                cf_comparison[entity_col] = counterfactual_event['entity']
         cf_comparison = cf_comparison.rename(columns={cf_time_col: actual_time_col})
         
         try:

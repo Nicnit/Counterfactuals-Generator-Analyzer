@@ -10,14 +10,14 @@ The `generate_counterfactuals.py` script works with any time series data:
 
 ```bash
 python3 src/generate_counterfactuals.py \
-  --input src/Data/your_data.csv \
+  --input your_data.csv \
   --events src/events_example.json
 ```
 
 Or use inline event definitions:
 ```bash
 python3 src/generate_counterfactuals.py \
-  --input src/Data/your_data.csv \
+  --input your_data.csv \
   --events "event1:2024-07-15:2024-07-17,event2:2024-11-19:2024-11-22"
 ```
 
@@ -88,8 +88,8 @@ After generating counterfactuals, compare them against actual data:
 
 ```bash
 python3 src/compare_counterfactuals.py \
-  --actual src/Data/traffic_dataset_with_trend.csv \
-  --counterfactual src/Data/traffic_dataset_with_trend_counterfactuals.csv
+  --actual your_data.csv \
+  --counterfactual your_data_counterfactuals.csv
 ```
 
 With events JSON file:
