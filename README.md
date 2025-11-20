@@ -2,9 +2,10 @@
 
 Python library and CLI for generating counterfactual forecasts for time series data. Detects parameters from your data automatically. Works with sales, traffic, temperature, air quality, and other time series.
 
-## What is This?
+## Description
 
-Answers: "What would have happened if this event didn't occur?"
+Project that uses Datetime .csv data to generate counterfactuals given events with a date range.
+Can them compare given data against the generated counterfactual data to see if the event was statistically significant.
 
 Generates counterfactual forecasts by:
 1. Learning patterns from pre-event data
@@ -42,37 +43,29 @@ python3 src/compare_counterfactuals.py \
 
 Generates comparison statistics showing differences between actual and counterfactual values.
 
-## How It Works
-
-Uses AR(p) models and cyclical pattern extraction.
-
 ### Autoregressive (AR) Model
 
 Fits an AR(p) model to pre-event data: `y_t = c + φ₁y_{t-1} + ... + φₚy_{t-p} + ε_t`
 
-Captures temporal dependencies and trends. Configurable order (default AR(1), can use AR(2), AR(3), etc.).
-
 ### Cyclical Pattern Extraction
 
 Extracts repeating patterns (hourly, daily, weekly, monthly):
-- Hourly: daily cycles (traffic peaks at rush hour)
-- Daily: weekly patterns (higher sales on weekends)
+- Hourly: daily cycles
+- Daily: weekly patterns
 - Weekly: monthly patterns
-- Monthly: yearly patterns (seasonal trends)
-
-Detected from data frequency automatically, or manually specified.
+- Monthly: yearly patterns
 
 ### Forecast Generation
 
-Combines AR model predictions with cyclical adjustments. Adds controlled noise based on historical residuals. Applies value constraints (e.g., non-negative values). Generates forecasts for event period plus configurable forecast horizon.
+Combines AR model predictions with cyclical adjustments. Adds controlled noise based on historical residuals. Applies value constraints. Generates forecasts for event period plus configurable forecast horizon.
 
 ### Features
 
 - Auto-detection: detects columns, frequency, and cycle patterns
 - Manual override: all parameters can be specified explicitly
-- Domain agnostic: works with any time series (datetime + numeric column)
+- Domain agnostic: works with any time series
 - Multiple events: process multiple events in one run
-- Entity support: handles multiple entities (sensors, locations, stores, etc.)
+- Entity support: handles multiple entities
 - Statistical analysis: compares actual vs counterfactual with detailed statistics
 
 ## Installation
@@ -101,7 +94,7 @@ Or use the setup script:
 CSV file needs:
 1. A datetime column (any name: `timestamp`, `date`, `time`, etc.)
 2. A numeric value column (any name: `sales`, `traffic`, `temperature`, etc.)
-3. Optional: entity column (if you have multiple sensors/locations/stores)
+3. Optional: entity column
 
 Example data structure:
 ```csv
@@ -115,10 +108,10 @@ Timestamp,Sales,Store
 ### Prepare Your Data
 
 Data should:
-- Have a datetime column (auto-detected)
-- Have a numeric value column (auto-detected)
+- Have a datetime column
+- Have a numeric value column
 - Be sorted by time
-- Have sufficient pre-event data (at least 2-3x the event duration)
+- Have sufficient pre-event data
 
 ### Define Events
 
@@ -236,13 +229,13 @@ The library detects:
 
 1. Time column: looks for datetime columns (`timestamp`, `date`, `time`, `datetime`, etc.)
 2. Target column: identifies first numeric column (excludes `id`, `name`, `latitude`, `longitude`)
-3. Entity column: detects if multiple entities exist (optional)
-4. Frequency: infers from time differences (hourly, daily, weekly, monthly)
+3. Entity column: detects if multiple entities exist
+4. Frequency: infers from time differences
 5. Cycle period: determines appropriate cycle based on frequency:
-   - Sub-daily data -> `hour` (hourly patterns)
-   - Daily data -> `day` (day-of-week patterns)
-   - Weekly data -> `week` (weekly patterns)
-   - Monthly data -> `month` (monthly patterns)
+   - Sub-daily data -> `hour`
+   - Daily data -> `day`
+   - Weekly data -> `week`
+   - Monthly data -> `month`
 
 All parameters can be manually overridden. Auto-detection is a convenience, not a requirement.
 
@@ -260,7 +253,7 @@ All parameters can be manually overridden. Auto-detection is a convenience, not 
 --ar-order               AR model order (default: 1)
 --cycle-period           Cycle period: hour/day/week/month (auto-detected if not provided)
 --forecast-days          Days to forecast after event (default: 5)
---min-value              Minimum value constraint (e.g., 0 for non-negative)
+--min-value              Minimum value constraint
 --max-value              Maximum value constraint
 --no-auto-detect         Disable auto-detection (requires --time-col and --target-col)
 ```
@@ -305,14 +298,11 @@ python3 src/generate_counterfactuals.py \
 
 ### Insufficient Pre-Event Data
 
-Need at least 2-3x the event duration in pre-event data. Example:
-- Event duration: 3 days
-- Minimum pre-event data: 6-9 days
-- Recommended: 2-4 weeks
+Need at least 2-3x the event duration in pre-event data.
 
 ### Multiple Entities
 
-With multiple entities (sensors, locations, stores), the script processes each entity separately, generates counterfactuals for each, and combines results in the output file.
+With multiple entities, the script processes each entity separately, generates counterfactuals for each, and combines results in the output file.
 
 ## Testing
 
