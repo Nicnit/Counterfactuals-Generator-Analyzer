@@ -19,8 +19,6 @@ Use cases:
 
 ## Quick Start
 
-### Installation
-
 ```bash
 pip install -r requirements.txt
 ```
