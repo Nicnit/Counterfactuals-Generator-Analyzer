@@ -132,3 +132,15 @@ PRODUCTION_CHECKLIST.md
 # Package files
 *.whl
 *.tar.gz
+
+# AI agent files
+AGENTS.md
+.cursorrules
+.cursor/
+.github/copilot-instructions.md
+.opencode/
+
+# AI assistant sessions
+*.session
+*.chat
+*.conversation

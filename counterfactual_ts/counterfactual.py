@@ -17,55 +17,41 @@ from .events import Event
 
 
 class TimeSeriesCounterfactualGenerator:
-    """Generate counterfactual forecasts using AR(p) models and cyclical patterns."""
+     """Generate counterfactual forecasts using AR models."""
+     
+     def __init__(
+         self,
+         time_col: Optional[str] = None,
+         target_col: Optional[str] = None,
+         ar_order: int = 1,
+         cycle_period: Optional[str] = None,
+         forecast_days: int = 5,
+         min_value: Optional[float] = None,
+         max_value: Optional[float] = None,
+         noise_factor: float = 0.5,
+         output_prefix: str = 'counterfactual',
+         auto_detect: bool = True
+     ):
+         self.time_col = time_col
+         self.target_col = target_col
+         self.ar_order = ar_order
+         self.cycle_period = cycle_period
+         self.forecast_days = forecast_days
+         self.min_value = min_value
+         self.max_value = max_value
+         self.noise_factor = noise_factor
+         self.output_prefix = output_prefix
+         self.auto_detect = auto_detect
     
-    def __init__(
-        self,
-        time_col: Optional[str] = None,
-        target_col: Optional[str] = None,
-        ar_order: int = 1,
-        cycle_period: Optional[str] = None,  # Auto-detect if None
-        forecast_days: int = 5,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
-        noise_factor: float = 0.5,
-        output_prefix: str = 'counterfactual',
-        auto_detect: bool = True
-    ):
-        """
-        Args:
-            time_col: Time column name (auto-detected if None)
-            target_col: Target column name (auto-detected if None)
-            ar_order: AR model order
-            cycle_period: 'hour', 'day', 'week', 'month' (auto-detected if None)
-            forecast_days: Days to forecast after event
-            min_value: Min value constraint
-            max_value: Max value constraint
-            noise_factor: Noise injection factor (0-1)
-            output_prefix: Output column prefix
-            auto_detect: Enable auto-detection
-        """
-        self.time_col = time_col
-        self.target_col = target_col
-        self.ar_order = ar_order
-        self.cycle_period = cycle_period
-        self.forecast_days = forecast_days
-        self.min_value = min_value
-        self.max_value = max_value
-        self.noise_factor = noise_factor
-        self.output_prefix = output_prefix
-        self.auto_detect = auto_detect
-    
-    def generate(
-        self,
-        df: pd.DataFrame,
-        event_start: Union[pd.Timestamp, str],
-        event_end: Union[pd.Timestamp, str],
-        event_name: str,
-        time_col: Optional[str] = None,
-        target_col: Optional[str] = None
-    ) -> pd.DataFrame:
-        """Generate counterfactual forecast for a single event."""
+def generate(
+         self,
+         df: pd.DataFrame,
+         event_start: Union[pd.Timestamp, str],
+         event_end: Union[pd.Timestamp, str],
+         event_name: str,
+         time_col: Optional[str] = None,
+         target_col: Optional[str] = None
+     ) -> pd.DataFrame:
         event_start = normalize_timezone(pd.Timestamp(event_start))
         event_end = normalize_timezone(pd.Timestamp(event_end))
         validate_event_dates(event_start, event_end, event_name)
@@ -145,16 +131,15 @@ class TimeSeriesCounterfactualGenerator:
         
         return forecast_df
     
-    def _generate_forecast(
-        self,
-        forecast_index: pd.DatetimeIndex,
-        model_params: Dict,
-        pattern: pd.Series,
-        pattern_extractor: CyclicalPatternExtractor,
-        last_values: np.ndarray,
-        event_name: str
-    ) -> np.ndarray:
-        """Generate forecast using AR model and cyclical patterns."""
+def _generate_forecast(
+         self,
+         forecast_index: pd.DatetimeIndex,
+         model_params: Dict,
+         pattern: pd.Series,
+         pattern_extractor: CyclicalPatternExtractor,
+         last_values: np.ndarray,
+         event_name: str
+     ) -> np.ndarray:
         phi = model_params['phi']
         c = model_params['c']
         residual_std = model_params['residual_std']
@@ -186,14 +171,13 @@ class TimeSeriesCounterfactualGenerator:
         
         return forecast
     
-    def generate_multiple(
-        self,
-        df: pd.DataFrame,
-        events: List[Event],
-        time_col: Optional[str] = None,
-        target_col: Optional[str] = None
-    ) -> pd.DataFrame:
-        """Generate counterfactuals for multiple events."""
+def generate_multiple(
+         self,
+         df: pd.DataFrame,
+         events: List[Event],
+         time_col: Optional[str] = None,
+         target_col: Optional[str] = None
+     ) -> pd.DataFrame:
         event_forecasts = []
         
         for event in events:

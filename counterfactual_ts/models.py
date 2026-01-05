@@ -17,12 +17,9 @@ class ARModel:
         self.residual_std = None
     
     def fit(self, y: np.ndarray) -> Dict:
-        """Fit AR(p) model using OLS."""
+        """Fit AR(p) model."""
         if len(y) < self.order + 1:
-            raise ValueError(
-                f"Need at least {self.order + 1} data points for AR({self.order}) model, "
-                f"got {len(y)}"
-            )
+            raise ValueError(f"Need {self.order + 1} points for AR({self.order}), got {len(y)}")
         
         if np.std(y[:-self.order]) < 1e-10:
             return {
@@ -72,17 +69,7 @@ class ARModel:
         }
     
     def _build_design_matrix(self, y: np.ndarray, order: int) -> np.ndarray:
-        """
-        Build design matrix for AR(p) model.
-        
-        Args:
-            y: Time series values
-            order: AR order
-        
-        Returns:
-            Design matrix X with shape (n, order+1)
-            First column is ones (intercept), remaining columns are lags
-        """
+        """Build design matrix for AR model."""
         n = len(y) - order
         X = np.ones((n, order + 1))
         
@@ -101,11 +88,8 @@ class ARModel:
         noise_std: Optional[float] = None,
         random_seed: Optional[int] = None
     ) -> np.ndarray:
-        """Generate forecast using AR model."""
         if len(last_values) < len(phi):
-            raise ValueError(
-                f"Need at least {len(phi)} last values, got {len(last_values)}"
-            )
+            raise ValueError(f"Need {len(phi)} values, got {len(last_values)}")
         
         forecast = np.zeros(horizon)
         state = last_values.copy()

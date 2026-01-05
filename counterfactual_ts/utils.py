@@ -60,21 +60,10 @@ def auto_detect_frequency(df: pd.DataFrame, time_col: str) -> str:
     return 'h'
 
 def create_forecast_index(
-    start: pd.Timestamp,
-    end: pd.Timestamp,
-    freq: str
-) -> pd.DatetimeIndex:
-    """
-    Create datetime index for forecast period.
-    
-    Args:
-        start: Start timestamp
-        end: End timestamp
-        freq: Frequency string
-    
-    Returns:
-        DatetimeIndex for forecast period
-    """
+     start: pd.Timestamp,
+     end: pd.Timestamp,
+     freq: str
+ ) -> pd.DatetimeIndex:
     # Normalize timezones
     start = normalize_timezone(start)
     end = normalize_timezone(end)
@@ -139,12 +128,11 @@ def auto_detect_time_column(df: pd.DataFrame) -> Optional[str]:
     return None
 
 def auto_detect_target_column(
-    df: pd.DataFrame, 
-    exclude_cols: Optional[List[str]] = None,
-    exclude_patterns: Optional[List[str]] = None,
-    target_patterns: Optional[List[str]] = None
-) -> Optional[str]:
-    """Detect target/value column in DataFrame."""
+     df: pd.DataFrame, 
+     exclude_cols: Optional[List[str]] = None,
+     exclude_patterns: Optional[List[str]] = None,
+     target_patterns: Optional[List[str]] = None
+ ) -> Optional[str]:
     exclude_cols = exclude_cols or []
     
     time_col = auto_detect_time_column(df)
@@ -194,16 +182,6 @@ def auto_detect_target_column(
     return None
 
 def auto_detect_cycle_period(df: pd.DataFrame, time_col: str) -> str:
-    """
-    Automatically detect appropriate cycle period from data.
-    
-    Args:
-        df: DataFrame with time series data
-        time_col: Name of time column
-    
-    Returns:
-        Cycle period string: 'hour', 'day', 'week', or 'month'
-    """
     if time_col not in df.columns:
         return 'hour'  # Default
     
