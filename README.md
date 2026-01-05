@@ -77,7 +77,7 @@ result = generator.generate_multiple(df, events)
 
 ## License
 
-This project is released under the Unlicense - see [LICENSE](LICENSE) file for details.
+Unlicense
 
 ## Notes
 
