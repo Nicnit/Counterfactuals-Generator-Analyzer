@@ -24,11 +24,11 @@ def example_basic_usage():
         'value': values
     })
     
-    # Clean data (auto-detects columns)
+    # Clean data
     df_clean, detected = clean_time_series(df, auto_detect=True)
     print(f"Detected columns: {detected}")
     
-    # Create generator (auto-detects cycle period)
+    # Create generator
     generator = TimeSeriesCounterfactualGenerator(
         ar_order=1,
         forecast_days=5,

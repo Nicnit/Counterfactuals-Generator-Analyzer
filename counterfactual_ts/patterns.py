@@ -5,10 +5,10 @@ import numpy as np
 from typing import Optional, Callable, Dict
 
 class CyclicalPatternExtractor:
-    """Extract cyclical patterns from time series data."""
+    """Extract cyclical patterns."""
     
     def __init__(self, period: str = 'hour'):
-        """Initialize pattern extractor."""
+        """Initialize extractor."""
         self.period = period
         self.period_map: Dict[str, Callable] = {
             'hour': lambda ts: ts.hour,
@@ -20,7 +20,7 @@ class CyclicalPatternExtractor:
         }
     
     def extract(self, df: pd.DataFrame, target_col: str) -> pd.Series:
-        """Extract cyclical pattern from time series."""
+        """Extract cyclical pattern."""
         if target_col not in df.columns:
             raise ValueError(f"Target column '{target_col}' not found in DataFrame")
         

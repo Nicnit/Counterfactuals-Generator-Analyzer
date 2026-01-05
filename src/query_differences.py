@@ -201,12 +201,12 @@ def print_statistics(stats, start_date, end_date, event_name):
     print(f"Location: {stats['city']} ({stats['latitude']:.4f}, {stats['longitude']:.4f})")
     print("-" * 70)
     
-    print(f"\n📊 DATA SUMMARY")
+    print(f"\nDATA SUMMARY")
     print(f"  Total time points: {stats['total_time_points']}")
     print(f"  Total observations: {stats['total_observations']}")
     print(f"  Valid observations: {stats['valid_observations']}")
     
-    print(f"\n📈 DIFFERENCE STATISTICS (Actual - Counterfactual)")
+    print(f"\nDIFFERENCE STATISTICS (Actual - Counterfactual)")
     print(f"  Mean difference:     {stats['mean_difference']:>10.2f} μg/m³")
     print(f"  Median difference:   {stats['median_difference']:>10.2f} μg/m³")
     print(f"  Std deviation:       {stats['std_difference']:>10.2f} μg/m³")
@@ -215,12 +215,12 @@ def print_statistics(stats, start_date, end_date, event_name):
     print(f"  25th percentile:     {stats['q25_difference']:>10.2f} μg/m³")
     print(f"  75th percentile:     {stats['q75_difference']:>10.2f} μg/m³")
     
-    print(f"\n🔢 DIFFERENCE COUNTS")
+    print(f"\nDIFFERENCE COUNTS")
     print(f"  Positive (actual > counterfactual): {stats['num_positive']:>4} ({stats['pct_positive']:>5.1f}%)")
     print(f"  Negative (actual < counterfactual): {stats['num_negative']:>4} ({stats['pct_negative']:>5.1f}%)")
     print(f"  Zero:                                {stats['num_zero']:>4}")
     
-    print(f"\n🌬️  ACTUAL PM2.5 STATISTICS")
+    print(f"\nACTUAL PM2.5 STATISTICS")
     if not np.isnan(stats['mean_actual_PM25']):
         print(f"  Mean:    {stats['mean_actual_PM25']:>10.2f} μg/m³")
         print(f"  Median:  {stats['median_actual_PM25']:>10.2f} μg/m³")
@@ -228,7 +228,7 @@ def print_statistics(stats, start_date, end_date, event_name):
     else:
         print(f"  No data available")
     
-    print(f"\n📉 COUNTERFACTUAL PM2.5 STATISTICS")
+    print(f"\nCOUNTERFACTUAL PM2.5 STATISTICS")
     if not np.isnan(stats['mean_counterfactual_PM25']):
         print(f"  Mean:    {stats['mean_counterfactual_PM25']:>10.2f} μg/m³")
         print(f"  Median:  {stats['median_counterfactual_PM25']:>10.2f} μg/m³")
@@ -241,13 +241,13 @@ def print_statistics(stats, start_date, end_date, event_name):
     # Interpretation
     mean_diff = stats['mean_difference']
     if mean_diff > 10:
-        print(f"\n💡 Interpretation: Actual PM2.5 was on average {mean_diff:.1f} μg/m³ HIGHER than counterfactual")
+        print(f"\nInterpretation: Actual PM2.5 was on average {mean_diff:.1f} μg/m³ HIGHER than counterfactual")
         print(f"   This suggests the event may have INCREASED air pollution.")
     elif mean_diff < -10:
-        print(f"\n💡 Interpretation: Actual PM2.5 was on average {abs(mean_diff):.1f} μg/m³ LOWER than counterfactual")
+        print(f"\nInterpretation: Actual PM2.5 was on average {abs(mean_diff):.1f} μg/m³ LOWER than counterfactual")
         print(f"   This suggests the event may have DECREASED air pollution.")
     else:
-        print(f"\n💡 Interpretation: Actual PM2.5 was on average {abs(mean_diff):.1f} μg/m³ different from counterfactual")
+        print(f"\nInterpretation: Actual PM2.5 was on average {abs(mean_diff):.1f} μg/m³ different from counterfactual")
         print(f"   The difference is relatively small, suggesting limited impact.")
 
 def save_results(df, stats, output_file, start_date, end_date, event_name, entity_name):

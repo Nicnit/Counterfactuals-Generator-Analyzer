@@ -2,14 +2,12 @@
 
 Tool for generating counterfactual forecasts from time series data. Built for my stats project.
 
-## Quick Start
-
 ```bash
 pip install -r requirements.txt
 python3 src/generate_counterfactuals.py --input data.csv --events events.json
 ```
 
-## Data Format
+## Data format
 
 CSV needs:
 - Datetime column 
@@ -22,7 +20,7 @@ Timestamp,Sales,Store
 2024-01-01 00:00:00,1500,Store_A
 ```
 
-## Events
+## Time events
 
 Create `events.json`:
 ```json
@@ -43,25 +41,25 @@ Compare results:
 python3 src/compare_counterfactuals.py --actual sales.csv --counterfactual sales_counterfactuals.csv
 ```
 
-## How it Works
+## How it works
 
-1. **AR Model**: Fits autoregressive model to pre-event data
-2. **Cyclical Patterns**: Extracts hourly/daily/weekly patterns  
-3. **Forecast**: Combines AR predictions with patterns + noise
-4. **Comparison**: Stats on actual vs counterfactual differences
+**AR Model**: Fits autoregressive model to pre-event data
+**Cyclical Patterns**: Extracts hourly/daily/weekly patterns  
+**Forecast**: Combines AR predictions with patterns + noise
+**Comparison**: Stats on actual vs counterfactual differences
 
 ## Options
 
 ```bash
---time-col timestamp      # Time column
---target-col sales        # Value column
---ar-order 2              # AR model order
---cycle-period day        # Pattern cycle
---forecast-days 7         # Days to forecast
---min-value 0             # Min constraint
+--time-col timestamp    # Time column
+--target-col sales  # Value column
+--ar-order 2    # AR model order
+--cycle-period day  # Pattern cycle
+--forecast-days 7   # Days to forecast
+--min-value 0   # Min constraint
 ```
 
-## Library Use
+## Using library
 
 ```python
 from counterfactual_ts import TimeSeriesCounterfactualGenerator, Event
@@ -77,8 +75,12 @@ result = generator.generate_multiple(df, events)
 - pandas >= 2.0.0
 - numpy >= 1.24.0
 
+## License
+
+This project is released under the Unlicense - see [LICENSE](LICENSE) file for details.
+
 ## Notes
 
-- Need 2-3x event duration in pre-event data
+- Need two or three times the event duration in pre-event data
 - Works with multiple entities
-- Auto-detects columns and frequency
+- Usually auto detects columns and frequency

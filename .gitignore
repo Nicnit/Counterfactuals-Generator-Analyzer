@@ -54,21 +54,7 @@ htmlcov/
 .nox/
 .hypothesis/
 tests/
-test_*.py
-*_test.py
-tests/output/
-tests/*.csv
-tests/*.json
-tests/*.log
 *.log
-test_output.log
-test_*.csv
-test_*.json
-*_test_output.csv
-*_test_output.json
-*_test_results.*
-TEST_*.md
-*TEST*.md
 
 # Data files
 *.csv
@@ -79,8 +65,6 @@ cached_road_coordinates.json
 # Output files (generated results)
 examples/Output/*.csv
 examples/Output/*.json
-tests/output/*.csv
-tests/output/*.log
 
 # Environment variables
 .env
@@ -89,17 +73,11 @@ tests/output/*.log
 
 # OS files
 .DS_Store
-.DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Project specific
-cached_road_coordinates.json
-*.pyc
-*.pyo
 
 # Temporary files
 *.tmp
@@ -110,28 +88,6 @@ cached_road_coordinates.json
 
 # Documentation builds
 docs/_build/
-docs/.doctrees/
-
-# Documentation directory (for AI assistance, not for end users)
-docs/
-
-# Developer documentation and internal notes
-src/Notes/
-src/GENERALIZABLE_USAGE.md
-*_IMPROVEMENTS.md
-*_SUMMARY.md
-PRODUCTION_CHECKLIST.md
-
-# Cloud deployment
-.azure/
-.aws/
-.gcp/
-*.pem
-*.key
-
-# Package files
-*.whl
-*.tar.gz
 
 # AI agent files
 AGENTS.md
@@ -139,8 +95,6 @@ AGENTS.md
 .cursor/
 .github/copilot-instructions.md
 .opencode/
-
-# AI assistant sessions
 *.session
 *.chat
 *.conversation

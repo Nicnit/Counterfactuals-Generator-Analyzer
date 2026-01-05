@@ -1,6 +1,4 @@
-"""
-Event management for counterfactual analysis.
-"""
+"""Event management."""
 
 import pandas as pd
 from dataclasses import dataclass
@@ -10,15 +8,7 @@ from .utils import normalize_timezone
 
 @dataclass
 class Event:
-    """
-    Represents a time-bounded event for counterfactual analysis.
-    
-    Attributes:
-        start: Event start timestamp
-        end: Event end timestamp
-        name: Event name/identifier
-        metadata: Optional metadata dictionary
-    """
+    """Event for counterfactual analysis."""
     start: pd.Timestamp
     end: pd.Timestamp
     name: str
@@ -74,12 +64,7 @@ class EventManager:
     """
     
     def __init__(self, events: List[Event]):
-        """
-        Initialize event manager.
-        
-        Args:
-            events: List of events
-        """
+        """Initialize event manager."""
         self.events = events
         self._validate_events()
     
@@ -89,12 +74,7 @@ class EventManager:
             event.__post_init__()  # Trigger validation
     
     def find_overlapping(self) -> List[tuple]:
-        """
-        Find overlapping events.
-        
-        Returns:
-            List of tuples (event1, event2) for overlapping events
-        """
+        """Find overlapping events."""
         overlapping = []
         for i, event1 in enumerate(self.events):
             for event2 in self.events[i+1:]:
@@ -107,16 +87,7 @@ class EventManager:
         start: pd.Timestamp,
         end: pd.Timestamp
     ) -> List[Event]:
-        """
-        Filter events within date range.
-        
-        Args:
-            start: Start timestamp
-            end: End timestamp
-        
-        Returns:
-            List of events that overlap with date range
-        """
+        """Filter events within date range."""
         start = normalize_timezone(start)
         end = normalize_timezone(end)
         
