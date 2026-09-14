@@ -18,17 +18,25 @@ class ARModel:
     
     def fit(self, y: np.ndarray) -> Dict:
         """Fit AR(p) model."""
+        y = np.asarray(y, dtype=float)
+
         if len(y) < self.order + 1:
             raise ValueError(f"Need {self.order + 1} points for AR({self.order}), got {len(y)}")
-        
-        if np.std(y[:-self.order]) < 1e-10:
+
+        # lstsq hands NaNs straight to LAPACK, which fails with an opaque
+        # DLASCL message instead of an exception.
+        if not np.isfinite(y).all():
+            raise ValueError("Input series contains NaN or infinite values")
+
+        if np.std(y) < 1e-10:
             return {
                 'phi': np.zeros(self.order),
                 'c': np.mean(y[self.order:]) if len(y) > self.order else y[-1],
                 'residual_std': 0.0,
-                'residuals': np.zeros(len(y) - self.order)
+                'residuals': np.zeros(len(y) - self.order),
+                'max_root_modulus': 0.0
             }
-        
+
         X = self._build_design_matrix(y, self.order)
         y_target = y[self.order:]
         
@@ -39,16 +47,15 @@ class ARModel:
                 'phi': np.zeros(self.order),
                 'c': np.mean(y_target),
                 'residual_std': 0.0,
-                'residuals': np.zeros(len(y_target))
+                'residuals': np.zeros(len(y_target)),
+                'max_root_modulus': 0.0
             }
         
-        if len(coeffs) > 1:
-            phi = coeffs[1:]
-            c = coeffs[0]
-        else:
-            phi = np.array([coeffs[0]])
-            c = 0.0
-        
+        # The design matrix always carries an intercept column plus one column
+        # per lag, so coeffs is [c, phi_1 .. phi_p].
+        c = coeffs[0]
+        phi = coeffs[1:]
+
         if not (np.isfinite(phi).all() and np.isfinite(c)):
             phi = np.zeros(self.order)
             c = np.mean(y_target) if len(y_target) > 0 else y[-1]
@@ -65,9 +72,27 @@ class ARModel:
             'phi': phi,
             'c': c,
             'residual_std': residual_std,
-            'residuals': residuals
+            'residuals': residuals,
+            'max_root_modulus': self.max_root_modulus(phi)
         }
     
+    @staticmethod
+    def max_root_modulus(phi: np.ndarray) -> float:
+        """Largest root of the AR characteristic polynomial.
+
+        At or above 1 the process is non-stationary: forecasts run away
+        instead of settling towards a mean. Usually a sign the series has a
+        trend the model has no term for.
+        """
+        phi = np.asarray(phi, dtype=float)
+        if len(phi) == 0 or not np.isfinite(phi).all():
+            return 0.0
+
+        # phi runs oldest lag first, the polynomial wants newest first.
+        roots = np.roots(np.concatenate(([1.0], -phi[::-1])))
+
+        return float(np.max(np.abs(roots))) if len(roots) else 0.0
+
     def _build_design_matrix(self, y: np.ndarray, order: int) -> np.ndarray:
         """Build design matrix for AR model."""
         n = len(y) - order

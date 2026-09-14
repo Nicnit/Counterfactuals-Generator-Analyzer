@@ -39,12 +39,16 @@ class CyclicalPatternExtractor:
         
         period_avg = df.groupby('_period')[target_col].mean()
         overall_mean = df[target_col].mean()
-        
+
         pattern = period_avg - overall_mean
         pattern = self._fill_missing_periods(pattern)
-        
+
+        # A period whose observations are all NaN averages to NaN. Left alone it
+        # would poison every forecast step it feeds.
+        pattern = pattern.fillna(0.0)
+
         return pattern.sort_index()
-    
+
     def _fill_missing_periods(self, pattern: pd.Series) -> pd.Series:
         """Fill missing periods with default values."""
         if self.period == 'hour':
@@ -61,11 +65,12 @@ class CyclicalPatternExtractor:
             all_periods = set(range(1, 5))
         else:
             return pattern
-        
+
         missing = all_periods - set(pattern.index)
-        for p in missing:
-            pattern[p] = 0.0  
-        
+        if missing:
+            filler = pd.Series(0.0, index=sorted(missing), dtype=float)
+            pattern = pd.concat([pattern, filler])
+
         return pattern
     
     def apply(
@@ -78,16 +83,10 @@ class CyclicalPatternExtractor:
             raise ValueError(f"Unsupported period: {self.period}")
         
         period_func = self.period_map[self.period]
-        adjustments = np.zeros(len(timestamps))
-        
-        for i, ts in enumerate(timestamps):
-            period_val = period_func(ts)
-            if period_val in pattern.index:
-                adjustments[i] = pattern[period_val]
-            else:
-                adjustments[i] = 0.0  
-        
-        return adjustments
+        period_vals = pd.Index(timestamps).map(period_func)
+        adjustments = pd.Series(period_vals).map(pattern)
+
+        return adjustments.fillna(0.0).to_numpy(dtype=float)
     
     def get_period_value(self, timestamp: pd.Timestamp) -> int:
         """Get period value for a given timestamp."""

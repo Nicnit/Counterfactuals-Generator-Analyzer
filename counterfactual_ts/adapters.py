@@ -80,11 +80,16 @@ def azureml_main(
         events=event_objects
     )
     
-    # Copy metadata if it exists
+    # Copy metadata across, but only where the input agrees on one value.
+    # Broadcasting the last row's value would relabel every row when the input
+    # holds several entities.
     for col in ["City", "Name", "longitude", "latitude"]:
-        if col in dataframe1.columns and len(dataframe1) > 0:
-            result_df[col] = dataframe1[col].iloc[-1]
-    
+        if col not in dataframe1.columns or len(dataframe1) == 0:
+            continue
+        values = dataframe1[col].dropna().unique()
+        if len(values) == 1:
+            result_df[col] = values[0]
+
     return result_df, None
 
 

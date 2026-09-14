@@ -53,7 +53,6 @@ htmlcov/
 .tox/
 .nox/
 .hypothesis/
-tests/
 *.log
 
 # Data files

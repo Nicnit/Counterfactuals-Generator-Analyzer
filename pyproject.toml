@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "counterfactual-ts"
+version = "0.1.0"
+description = "Counterfactual forecasts for time series data given events"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "Unlicense" }
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0.0"]
+
+[tool.setuptools]
+packages = ["counterfactual_ts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

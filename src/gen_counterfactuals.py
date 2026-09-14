@@ -1,3 +1,5 @@
+import hashlib
+
 import pandas as pd
 import numpy as np
 
@@ -11,6 +13,10 @@ def ensure_naive(ts):
     if isinstance(ts, pd.Timestamp) and ts.tz is not None:
         return ts.tz_localize(None)
     return pd.Timestamp(ts) if not isinstance(ts, pd.Timestamp) else ts
+
+def stable_seed(name):
+    """Seed that holds across runs. hash() is salted per interpreter."""
+    return int.from_bytes(hashlib.blake2b(name.encode('utf-8'), digest_size=4).digest(), 'big')
 
 EVENTS = [
     (ensure_naive(pd.Timestamp('2024-07-15')), ensure_naive(pd.Timestamp('2024-07-17')), 'muharran'),
@@ -151,12 +157,14 @@ def generate_event_counterfactual(df, event_start, event_end, event_name, time_c
             cycle_adj = 0
         
         forecast_mean[i] = base_forecast + cycle_adj
-        last_value = forecast_mean[i]
-    
+        # carry the ar level forward, not the cycle-adjusted value. feeding the
+        # cycle back in runs it through the ar filter and amplifies it
+        last_value = base_forecast
+
     # add some noise based on historical residuals
-    # use seed for reproducibility (based on event name hash)
+    # use seed for reproducibility (based on event name)
     if residual_std > 0:
-        seed = hash(event_name) % (2**31)  # deterministic seed per event
+        seed = stable_seed(event_name)
         rng = np.random.RandomState(seed)
         noise = rng.normal(0, residual_std * 0.5, forecast_horizon)
         forecast_mean = forecast_mean + noise

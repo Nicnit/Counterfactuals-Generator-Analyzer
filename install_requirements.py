@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Setup script for Counterfactual Time Series Analysis project.
+Dependency installer for the Counterfactual Time Series Analysis project.
 Installs all necessary Python packages from requirements.txt
+
+Not a packaging script. Build metadata lives in pyproject.toml.
 """
 
 import subprocess
@@ -38,7 +40,7 @@ def install_requirements():
 
 def verify_installations():
     """Verify that key packages are installed"""
-    required_packages = ['pandas', 'numpy', 'requests']
+    required_packages = ['pandas', 'numpy']
     missing = []
     
     for package in required_packages:
@@ -78,9 +80,9 @@ def main():
         print(" Setup complete!")
         print("=" * 50)
         print("")
-        print("You can now run the test scripts:")
-        print("  python3 tests/test_simple.py")
-        print("  python3 tests/test_counterfactuals.py")
+        print("You can now run the tests:")
+        print("  pip3 install -r requirements-dev.txt")
+        print("  python3 -m pytest tests/")
     else:
         print("")
         print(" Warning: Some packages may not be installed correctly.")

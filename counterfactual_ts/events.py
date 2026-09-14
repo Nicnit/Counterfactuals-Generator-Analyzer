@@ -19,10 +19,12 @@ class Event:
         self.start = normalize_timezone(self.start)
         self.end = normalize_timezone(self.end)
         
-        if self.start >= self.end:
+        # A one-day event written as start == end is valid; the forecast window
+        # is widened by forecast_days regardless.
+        if self.start > self.end:
             raise ValueError(
                 f"Invalid event dates for {self.name}: "
-                f"start {self.start} >= end {self.end}"
+                f"start {self.start} > end {self.end}"
             )
     
     def duration(self) -> pd.Timedelta:

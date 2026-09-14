@@ -27,13 +27,11 @@ class TimeSeriesQuery:
         if time_col in self.df.columns:
             self.df[time_col] = pd.to_datetime(self.df[time_col])
         elif isinstance(self.df.index, pd.DatetimeIndex):
-            # Use index as time column
-            self.df = self.df.reset_index()
-            if self.df.index.name:
-                self.time_col = self.df.index.name
-            else:
-                self.time_col = 'index'
-                self.df['index'] = pd.to_datetime(self.df['index'])
+            # Promote the index to a column. The name has to be read before
+            # reset_index, which replaces it with a RangeIndex.
+            self.time_col = self.df.index.name or 'index'
+            self.df = self.df.reset_index(names=self.time_col)
+            self.df[self.time_col] = pd.to_datetime(self.df[self.time_col])
     
     def filter_date_range(
         self,

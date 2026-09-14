@@ -2,6 +2,7 @@
 
 import pandas as pd
 import numpy as np
+import re
 from typing import Optional, Dict, Tuple, List
 from .utils import (
     normalize_timezone,
@@ -38,18 +39,54 @@ def auto_detect_columns(
         detected['target_col'] = target_col if target_col in df.columns else None
     
     if entity_col is None:
-        entity_patterns = ['name', 'id', 'sensor', 'station', 'location', 'entity']
-        for col in df.columns:
-            col_lower = col.lower()
-            if any(pattern in col_lower for pattern in entity_patterns):
-                detected['entity_col'] = col
-                break
-        else:
-            detected['entity_col'] = None
+        detected['entity_col'] = _detect_entity_column(
+            df, detected['time_col'], detected['target_col']
+        )
     else:
         detected['entity_col'] = entity_col if entity_col in df.columns else None
-    
+
     return detected
+
+
+# Matched on word boundaries. Plain substrings pick up measurement columns:
+# 'id' is inside 'humidity', 'name' is inside 'filename'.
+_ENTITY_NAME_RE = re.compile(
+    r'(^|[^a-z])(name|id|sensor|station|location|entity|store|site|region|group)([^a-z]|$)'
+)
+
+
+def _detect_entity_column(
+    df: pd.DataFrame,
+    time_col: Optional[str],
+    target_col: Optional[str]
+) -> Optional[str]:
+    """Find the column that splits the frame into separate series."""
+    candidates = []
+
+    for col in df.columns:
+        if col in (time_col, target_col):
+            continue
+        if pd.api.types.is_numeric_dtype(df[col]):
+            continue
+        if pd.api.types.is_datetime64_any_dtype(df[col]):
+            continue
+
+        # An entity repeats across timestamps, so it has far fewer distinct
+        # values than rows. Free-text columns fail this.
+        distinct = df[col].nunique(dropna=True)
+        if distinct == 0 or distinct > max(1, len(df) // 2):
+            continue
+
+        candidates.append(col)
+
+    if not candidates:
+        return None
+
+    for col in candidates:
+        if _ENTITY_NAME_RE.search(col.lower()):
+            return col
+
+    return candidates[0]
 
 
 def clean_time_series(
@@ -159,23 +196,28 @@ def _deduplicate_by_entity(
     """
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError("DataFrame must have datetime index for deduplication")
-    
+
     # Reset index to allow grouping
+    index_name = df.index.name
     df_reset = df.reset_index()
-    time_col_name = df.index.name if df.index.name else 'index'
+    time_col_name = index_name if index_name else 'index'
     duplicate_cols = [time_col_name, entity_col]
-    
+
     if df_reset.duplicated(subset=duplicate_cols).any():
         # Group by entity and time, take mean of target
         agg_dict = {target_col: 'mean'}
-        
+
         # Preserve other columns (take first)
         for col in df_reset.columns:
             if col not in duplicate_cols + [target_col]:
                 agg_dict[col] = 'first'
-        
+
         df_reset = df_reset.groupby(duplicate_cols, as_index=False).agg(agg_dict)
-        df_reset = df_reset.set_index(time_col_name)
-    
-    return df_reset
+
+    # Restore the index on both paths. Returning a RangeIndex when there was
+    # nothing to deduplicate breaks every caller that asked for set_index.
+    result = df_reset.set_index(time_col_name).sort_index()
+    result.index.name = index_name
+
+    return result
 

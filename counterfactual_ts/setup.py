@@ -12,57 +12,42 @@ from pathlib import Path
 
 def run_setup_script(
     script_path: str,
-    shell: bool = True,
     check: bool = True
 ) -> bool:
     """
     Run a setup script (bash/shell script or batch file).
-    
+
     Automatically detects OS and runs appropriate script.
-    
+
     Args:
         script_path: Path to setup script
-        shell: Whether to run in shell (default: True)
         check: Whether to raise exception on failure (default: True)
-    
+
     Returns:
         True if successful, False otherwise
     """
     script_path = Path(script_path)
-    
+
     if not script_path.exists():
         raise FileNotFoundError(f"Setup script not found: {script_path}")
-    
-    # Make script executable on Unix systems
-    if platform.system() != 'Windows':
-        os.chmod(script_path, 0o755)
-    
+
+    if platform.system() == 'Windows' and script_path.suffix in ['.bat', '.cmd']:
+        command = [str(script_path)]
+    elif script_path.suffix == '.sh':
+        command = ['bash', str(script_path)]
+    else:
+        command = [str(script_path)]
+        # Only needed when the file is executed directly rather than handed
+        # to an interpreter.
+        if platform.system() != 'Windows':
+            os.chmod(script_path, 0o755)
+
     try:
-        if platform.system() == 'Windows':
-            # Windows: try .bat or .cmd, or use cmd.exe
-            if script_path.suffix in ['.bat', '.cmd']:
-                result = subprocess.run(
-                    [str(script_path)],
-                    shell=shell,
-                    check=check
-                )
-            else:
-                # Assume it's a shell script, try with bash (if available)
-                result = subprocess.run(
-                    ['bash', str(script_path)],
-                    shell=shell,
-                    check=check
-                )
-        else:
-            # Unix/Linux/macOS: run directly or with bash
-            result = subprocess.run(
-                ['bash', str(script_path)] if script_path.suffix == '.sh' else [str(script_path)],
-                shell=shell,
-                check=check
-            )
-        
+        # No shell=True here: on POSIX it would treat everything after the
+        # first list element as positional args to the shell and run nothing.
+        result = subprocess.run(command, check=check)
         return result.returncode == 0
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         if check:
             raise
         return False
@@ -144,19 +129,19 @@ def install_dependencies(
 
 def setup_environment(
     directory: str = '.',
-    run_setup_script: bool = True,
+    run_script: bool = True,
     install_deps: bool = True,
     requirements_file: str = 'requirements.txt'
 ) -> dict:
     """
     Complete environment setup.
-    
+
     Args:
         directory: Directory containing setup files
-        run_setup_script: Whether to run setup script if found
+        run_script: Whether to run setup script if found
         install_deps: Whether to install dependencies
         requirements_file: Path to requirements file
-    
+
     Returns:
         Dictionary with setup results:
             - 'setup_script_run': bool
@@ -172,21 +157,21 @@ def setup_environment(
     }
     
     # Find and run setup script
-    if run_setup_script:
+    if run_script:
         script_path = find_setup_script(directory)
         if script_path:
             results['setup_script_path'] = script_path
             results['setup_script_run'] = run_setup_script(script_path, check=False)
-    
+
     # Install dependencies
     if install_deps:
         results['dependencies_installed'] = install_dependencies(requirements_file)
-    
+
     # Overall success
     results['success'] = (
-        (not run_setup_script or results['setup_script_run']) and
+        (not run_script or results['setup_script_run']) and
         (not install_deps or results['dependencies_installed'])
     )
-    
+
     return results
 

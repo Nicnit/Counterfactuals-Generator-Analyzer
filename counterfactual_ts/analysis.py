@@ -12,26 +12,47 @@ def calculate_differences(
     actual_col: str,
     counterfactual_col: str,
     entity_col: Optional[str] = None,
-    difference_col: str = 'difference'
+    difference_col: str = 'difference',
+    extra_cols: Optional[List[str]] = None
 ) -> pd.DataFrame:
-    """Calculate differences between actual and counterfactual values."""
+    """Calculate differences between actual and counterfactual values.
+
+    extra_cols names further counterfactual columns to carry through the
+    merge, such as prediction band bounds.
+    """
+    for frame, col, label in (
+        (actual, time_col, 'actual'),
+        (actual, actual_col, 'actual'),
+        (counterfactual, time_col, 'counterfactual'),
+        (counterfactual, counterfactual_col, 'counterfactual'),
+    ):
+        if col not in frame.columns:
+            raise ValueError(f"Column '{col}' not found in {label} data")
+
+    # Only join on the entity when both sides carry it. Joining on time alone
+    # across entities would produce a cross product.
+    join_on_entity = bool(entity_col) and (
+        entity_col in actual.columns and entity_col in counterfactual.columns
+    )
+
     merge_cols = [time_col]
-    if entity_col:
+    if join_on_entity:
         merge_cols.append(entity_col)
-    
-    cf_cols = [time_col, counterfactual_col]
-    if entity_col and entity_col in counterfactual.columns:
-        cf_cols.append(entity_col)
-    
+
+    cf_cols = merge_cols + [counterfactual_col]
+    for col in (extra_cols or []):
+        if col in counterfactual.columns and col not in cf_cols:
+            cf_cols.append(col)
+
     merged = actual.merge(
         counterfactual[cf_cols],
         on=merge_cols,
         how='inner',
         suffixes=('_actual', '_cf')
     )
-    
+
     merged[difference_col] = merged[actual_col] - merged[counterfactual_col]
-    
+
     return merged
 
 
@@ -124,7 +145,8 @@ def compare_actual_vs_counterfactual(
     actual_col: str,
     counterfactual_col: str,
     entity_col: Optional[str] = None,
-    aggregate: bool = True
+    aggregate: bool = True,
+    extra_cols: Optional[List[str]] = None
 ) -> Dict:
     """Compare actual vs counterfactual."""
     differences = calculate_differences(
@@ -133,7 +155,8 @@ def compare_actual_vs_counterfactual(
         time_col=time_col,
         actual_col=actual_col,
         counterfactual_col=counterfactual_col,
-        entity_col=entity_col
+        entity_col=entity_col,
+        extra_cols=extra_cols
     )
     
     summary = compute_summary_statistics(differences, 'difference')

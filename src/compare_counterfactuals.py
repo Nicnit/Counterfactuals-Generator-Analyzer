@@ -89,7 +89,14 @@ Examples:
         '--entity-col',
         help='Name of entity column (e.g., sensor, location). Auto-detected if not provided.'
     )
-    
+
+    parser.add_argument(
+        '--interval',
+        type=float,
+        help='Band level the counterfactual was generated with, e.g. 0.9. Used '
+             'to say how many points outside the band were expected by chance.'
+    )
+
     return parser.parse_args()
 
 
@@ -111,37 +118,57 @@ def load_events_from_json(events_file: str) -> List[Event]:
         return events
 
 
-def detect_events_from_columns(counterfactual_df: pd.DataFrame) -> List[Event]:
+BAND_SUFFIXES = ('_lower', '_upper')
+
+
+def is_point_forecast_column(col: str) -> bool:
+    """A counterfactual column that is not one of its own band bounds."""
+    lowered = col.lower()
+    if 'counterfactual' not in lowered or col == 'counterfactual':
+        return False
+    return not lowered.endswith(BAND_SUFFIXES)
+
+
+def detect_events_from_columns(
+    counterfactual_df: pd.DataFrame,
+    forecast_days: int
+) -> List[Event]:
     """Detect events from counterfactual column names."""
     events = []
-    counterfactual_cols = [col for col in counterfactual_df.columns 
-                          if 'counterfactual' in col.lower() and col != 'counterfactual']
-    
+    counterfactual_cols = [col for col in counterfactual_df.columns
+                          if is_point_forecast_column(col)]
+
     if not counterfactual_cols:
         raise ValueError("No counterfactual columns found")
-    
+
+    time_col = counterfactual_df.columns[0]
+    times = pd.to_datetime(counterfactual_df[time_col], errors='coerce')
+
     for col in counterfactual_cols:
         if 'counterfactual_' in col.lower():
             event_name = col.split('counterfactual_')[-1]
         else:
             parts = col.split('_')
             event_name = parts[-1] if len(parts) >= 2 else col
-        
-        event_data = counterfactual_df[counterfactual_df[col].notna()]
-        if len(event_data) > 0:
-            time_col = counterfactual_df.columns[0]
-            start = pd.Timestamp(event_data[time_col].min())
-            end = start + pd.Timedelta(days=2)
-            
-            events.append(Event(
-                start=start,
-                end=end,
-                name=event_name
-            ))
-    
+
+        covered = times[counterfactual_df[col].notna() & times.notna()]
+        if len(covered) == 0:
+            continue
+
+        # The generator writes one column spanning event_start through
+        # event_end + forecast_days, so the event end is recoverable.
+        start = covered.min()
+        end = max(covered.max() - pd.Timedelta(days=forecast_days), start)
+
+        events.append(Event(
+            start=start,
+            end=end,
+            name=event_name
+        ))
+
     if not events:
         raise ValueError("Could not detect events from counterfactual columns")
-    
+
     return events
 
 
@@ -206,7 +233,7 @@ def main():
         events = load_events_from_json(args.events)
         print(f"   Loaded {len(events)} events")
     else:
-        events = detect_events_from_columns(counterfactual_df)
+        events = detect_events_from_columns(counterfactual_df, args.forecast_days)
         print(f"   Detected {len(events)} events")
         if args.events:
             print(f"   Warning: Events file not found")
@@ -231,17 +258,19 @@ def main():
         event_period_start = event.start
         event_period_end = forecast_end
         
-        cf_col = None
-        for col in counterfactual_df.columns:
-            if 'counterfactual' in col.lower() and event.name in col.lower():
-                cf_col = col
-                break
-        
-        if not cf_col:
-            cf_col = f'counterfactual_{event.name}'
-            if cf_col not in counterfactual_df.columns:
-                print(f"     Warning: Column not found, skipping")
-                continue
+        event_key = event.name.lower()
+        matches = [
+            col for col in counterfactual_df.columns
+            if is_point_forecast_column(col) and event_key in col.lower()
+        ]
+        cf_col = matches[0] if matches else f'counterfactual_{event.name}'
+
+        if cf_col not in counterfactual_df.columns:
+            print(f"     Warning: Column not found, skipping")
+            continue
+
+        band_cols = [f'{cf_col}{suffix}' for suffix in BAND_SUFFIXES]
+        has_band = all(col in counterfactual_df.columns for col in band_cols)
         
         # Filter to event period
         if isinstance(actual_clean.index, pd.DatetimeIndex):
@@ -273,14 +302,15 @@ def main():
         
         print(f"     Data points: {len(actual_event)} actual, {len(counterfactual_event)} counterfactual")
         
-        cf_comparison = counterfactual_event[[cf_time_col, cf_col]].copy()
+        keep = [cf_time_col, cf_col] + (band_cols if has_band else [])
+        cf_comparison = counterfactual_event[keep].copy()
         if entity_col:
             if entity_col in counterfactual_event.columns:
                 cf_comparison[entity_col] = counterfactual_event[entity_col]
             elif 'entity' in counterfactual_event.columns:
                 cf_comparison[entity_col] = counterfactual_event['entity']
         cf_comparison = cf_comparison.rename(columns={cf_time_col: actual_time_col})
-        
+
         try:
             comparison = compare_actual_vs_counterfactual(
                 actual=actual_event,
@@ -289,26 +319,41 @@ def main():
                 actual_col=target_col,
                 counterfactual_col=cf_col,
                 entity_col=entity_col,
-                aggregate=True
+                aggregate=True,
+                extra_cols=band_cols if has_band else None
             )
-            
+
             differences_df = comparison['differences']
             summary = comparison['summary']
             time_aggregated = comparison.get('time_aggregated')
-            
+
+            # summary is None when every difference is NaN, which happens if the
+            # two files overlap in time but not in usable values.
+            if summary is None:
+                print(f"     Warning: No comparable values after merge, skipping")
+                continue
+
+            if has_band and all(c in differences_df.columns for c in band_cols):
+                inside = differences_df[target_col].between(
+                    differences_df[band_cols[0]], differences_df[band_cols[1]]
+                )
+                summary['pct_outside_band'] = float((~inside).mean() * 100)
+                if args.interval is not None:
+                    summary['pct_outside_expected'] = (1.0 - args.interval) * 100
+
             differences_df['event_name'] = event.name
             if time_aggregated is not None:
                 time_aggregated['event_name'] = event.name
-            
+
             all_results.append({
                 'event': event.name,
                 'differences': differences_df,
                 'summary': summary,
                 'time_aggregated': time_aggregated
             })
-            
-            print(f"     Mean: {summary.get('mean', np.nan):.2f}, Median: {summary.get('median', np.nan):.2f}, Std: {summary.get('std', np.nan):.2f}")
-            
+
+            print(f"     Mean: {summary['mean']:.2f}, Median: {summary['median']:.2f}, Std: {summary['std']:.2f}")
+
         except Exception as e:
             print(f"     Error comparing: {e}")
             import traceback
@@ -361,6 +406,18 @@ def main():
         print(f"  Min difference: {summary.get('min', np.nan):.2f}")
         print(f"  Max difference: {summary.get('max', np.nan):.2f}")
         print(f"  Data points: {summary.get('count', 0)}")
+
+        outside = summary.get('pct_outside_band')
+        if outside is not None:
+            expected = summary.get('pct_outside_expected')
+            if expected is None:
+                print(f"  Outside prediction band: {outside:.1f}% of points")
+            else:
+                print(f"  Outside prediction band: {outside:.1f}% of points "
+                      f"({expected:.1f}% expected by chance)")
+                verdict = "consistent with no effect" if outside <= expected * 2 \
+                    else "more than chance would give"
+                print(f"    -> {verdict}")
     print("=" * 70)
     
     return all_results
